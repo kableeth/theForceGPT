@@ -86,22 +86,72 @@ public class OpenAI {
         
         // Get the describe result for the object
         Schema.DescribeSObjectResult describeResult = recordId.getSObjectType().getDescribe();
-        
+        List<String> fieldsIgnore = new List<String>();
+        List<String> fieldsSpecial = new List<String>();
+
+        fieldsSpecial.add('accountid');
+        fieldsSpecial.add('ownerid');
+        fieldsSpecial.add('lastmodifiedbyid');
+        fieldsSpecial.add('createdbyid');
+
+
+        fieldsIgnore.add('masterrecordid');
+        fieldsIgnore.add('reportstoid');
+        fieldsIgnore.add('individualid');
+        fieldsIgnore.add('rh2__describe__c');
+        fieldsIgnore.add('recordtypeid');
         // Get the object name
         String objectName = describeResult.getName();
-		String queryStr = 'SELECT ';
-        
-		Map<String, SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap();
+        String queryStr = 'SELECT ';
 
-			for (String fieldName : fieldMap.keySet()) {
-    			queryStr += fieldName + ', ';
-			}
+        Map<String, SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap();
 
-			queryStr = queryStr.substring(0, queryStr.length() - 2);
-			queryStr += ', (SELECT Id, Subject, Status, ActivityDate, Owner.Name FROM Tasks ORDER BY ActivityDate DESC LIMIT 10) FROM ' + objectName + ' WHERE Id = :recordId';
+        for (String fieldName : fieldMap.keySet()) {
+            SObjectField field = fieldMap.get(fieldName);
+            Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+            system.debug(fieldName);
+            system.debug(fieldDescribe.getType());
+            
+            //don't add fields that are in the ignore
+            if (fieldsSpecial.contains(fieldName)) {
+                if(fieldName == 'accountid') {
 
-        
-        
+                    // This is a reference field, so we want to get the Name field as well
+                    queryStr += fieldName + ', ';
+                    fieldName = 'account';
+                    queryStr += fieldName + '.Name, ';
+                }
+                if(fieldName == 'ownerid') {
+                    queryStr += fieldName + ', ';
+                    fieldName = 'owner';
+                    queryStr += fieldName + '.Name, ';
+                }
+                if(fieldName == 'createdbyid') {
+                    queryStr += fieldName + ', ';
+                    fieldName = 'createdby';
+                    queryStr += fieldName + '.Name, ';
+                }
+                if(fieldName == 'lastmodifiedbyid') {
+                    queryStr += fieldName + ', ';
+                    fieldName = 'lastmodifiedby';
+                    queryStr += fieldName + '.Name, ';
+                }
+            }
+            else if (fieldDescribe.getType() == Schema.DisplayType.REFERENCE && !fieldsIgnore.contains(fieldName)) {
+
+                // This is a reference field, so we want to get the Name field as well
+                queryStr += fieldName + ', ' + fieldName + '.Name, ';
+            } 
+            else {
+                // Not a reference field, just add the field name
+                queryStr += fieldName + ', ';
+            }
+        system.debug(queryStr);
+        }
+
+        queryStr = queryStr.substring(0, queryStr.length() - 2);
+        queryStr += ', (SELECT Id, Subject, Status, ActivityDate, Owner.Name FROM Tasks ORDER BY ActivityDate DESC LIMIT 10) FROM ' + objectName + ' WHERE Id = :recordId';
+
         
         String responseJSON;
         if (objectName == 'Account') {
