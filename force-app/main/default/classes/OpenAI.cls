@@ -1,4 +1,4 @@
-public class OpenAI {
+public with sharing class OpenAI {
   public static String sendMessage(
     String context,
     String prompt,
@@ -9,27 +9,32 @@ public class OpenAI {
 
     // Retrieve the custom setting by its name for api key
     openaikey__c setting = openaikey__c.getInstance();
+    Map<String, Object> requestBody = new Map<String, Object>();
+    List<Object> messages = new List<Object>();
     String apiKey;
     // Check if the custom setting exists
     if (setting != null) {
       // Get the value of the secret_key__c field
       apiKey = setting.secret_key__c;
     }
-    //get record info
+    //get record info from the page that the user is viewing
+    system.debug('Getting record info');
     String record = getRecordInfo(recordId);
-    Map<String, Object> requestBody = new Map<String, Object>();
-    List<Object> messages = new List<Object>();
 
+
+    //set LLM system prompt message
     Map<String, Object> message1 = new Map<String, Object>();
     message1.put('role', 'system');
     message1.put('content', context);
     messages.add(message1);
 
+    //send user prompt as input
     Map<String, Object> message2 = new Map<String, Object>();
     message2.put('role', 'user');
     message2.put('content', prompt + '' + record);
     messages.add(message2);
 
+    //set required variables
     requestBody.put('model', 'gpt-3.5-turbo');
     requestBody.put('messages', messages);
     requestBody.put('temperature', 1);
@@ -48,27 +53,38 @@ public class OpenAI {
     request.setMethod('POST');
     request.setHeader('Content-Type', 'application/json');
     request.setHeader('Authorization', 'Bearer ' + apiKey);
-    system.debug('requestBody');
-    system.debug(requestBodyJSON);
     request.setBody(requestBodyJSON);
 
     Http http = new Http();
-    HTTPResponse response = http.send(request);
+    HTTPResponse response;
+    
+    try {
+      response = http.send(request);
+    }
+    catch (Exception e) {
+    // Display the error message
+    throw new CalloutException('Error calling OpenAI API: ' + e.getMessage());
+    }
 
-    // Parse the response from the OpenAI API and extract the generated text
+    // Parse the response from the OpenAI API and get the response
     String jsonResponse = response.getBody();
-    System.debug(jsonResponse);
 
     Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(
       jsonResponse
     );
+    //check for error
+    if (responseMap.containsKey('error')) {
+      Map<String, Object> errorMap = (Map<String, Object>) responseMap.get('error');
+      String errorMessage = (String) errorMap.get('message');
+      String errorCode = (String) errorMap.get('code');
+      throw new CalloutException('Error from OpenAI API: ' + errorMessage + ' (Code: ' + errorCode + ')');
+    } 
     List<Object> choicesList = (List<Object>) responseMap.get('choices');
     Map<String, Object> choiceMap = (Map<String, Object>) choicesList[0];
     Map<String, Object> messageMap = (Map<String, Object>) choiceMap.get(
       'message'
     );
     String content = (String) messageMap.get('content');
-    System.debug(content);
 
     return content;
   }
@@ -95,69 +111,53 @@ public class OpenAI {
   }
   public static String getRecordInfo(Id recordId) {
     // Get the describe result for the object
-    Schema.DescribeSObjectResult describeResult = recordId.getSObjectType()
-      .getDescribe();
-    List<String> fieldsIgnore = new List<String>();
-    List<String> fieldsSpecial = new List<String>();
-
-    fieldsSpecial.add('accountid');
-    fieldsSpecial.add('ownerid');
-    fieldsSpecial.add('lastmodifiedbyid');
-    fieldsSpecial.add('createdbyid');
-    fieldsSpecial.add('parentid');
-
-    fieldsIgnore.add('masterrecordid');
-    fieldsIgnore.add('reportstoid');
-    fieldsIgnore.add('individualid');
-    fieldsIgnore.add('rh2__describe__c');
-    fieldsIgnore.add('recordtypeid');
-    // Get the object name
-    String objectName = describeResult.getName();
+    String responseJSON;
     String queryStr = 'SELECT ';
+    //get object & field info
+    Schema.DescribeSObjectResult describeResult = recordId.getSObjectType().getDescribe();
+    String objectName = describeResult.getName();
+    Map<String, SObjectField> fieldMap = Schema.getGlobalDescribe().get(objectName).getDescribe().fields.getMap();
+    system.debug('objectName: ' + objectName);
 
-    Map<String, SObjectField> fieldMap = Schema.getGlobalDescribe()
-      .get(objectName)
-      .getDescribe()
-      .fields.getMap();
+    //vars
+    List<OpenAI_Chat_Settings_Special_Fields__mdt> fieldsSpecial = new List<OpenAI_Chat_Settings_Special_Fields__mdt>();
+    Map<String, String> fieldNamesReplaced = new Map<String, String>();
+    List<String> fieldNamesIgnore = new List<String>();
+    
+    //get field api names to prevent data leak and errors with api names that are different when using going through lookup relationship e.g.
+    fieldsSpecial= [SELECT Field_API_Name__c, Action__c, Replaced_Field_API_Name__c FROM OpenAI_Chat_Settings_Special_Fields__mdt];
+    system.debug('Special Fields:' + fieldsSpecial);
 
+    //get new field api names from custom meta data
+    for(OpenAI_Chat_Settings_Special_Fields__mdt mdt :fieldsSpecial) {
+      if(mdt.Action__c == 'Replace') {
+        fieldNamesReplaced.put(mdt.Field_API_Name__c, mdt.Replaced_Field_API_Name__c);
+      }
+      else if (mdt.Action__c == 'Ignore') {
+        fieldNamesIgnore.add(mdt.Field_API_Name__c);
+      }
+    }
+    system.debug('fieldNamesReplaced:' + fieldNamesReplaced);
+    system.debug('fieldNamesIgnore:' + fieldNamesIgnore);
+
+    //Create SOQL query by looping through object fields
     for (String fieldName : fieldMap.keySet()) {
+
+      //get the field type to determine how if it's a reference field 
       SObjectField field = fieldMap.get(fieldName);
       Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
-      system.debug(fieldName);
-      system.debug(fieldDescribe.getType());
 
-      //don't add fields that are in the ignore
-      if (fieldsSpecial.contains(fieldName)) {
-        if (fieldName == 'accountid') {
-          // This is a reference field, so we want to get the Name field as well
-          queryStr += fieldName + ', ';
-          fieldName = 'account';
-          queryStr += fieldName + '.Name, ';
-        }
-        if (fieldName == 'ownerid') {
-          queryStr += fieldName + ', ';
-          fieldName = 'owner';
-          queryStr += fieldName + '.Name, ';
-        }
-        if (fieldName == 'createdbyid') {
-          queryStr += fieldName + ', ';
-          fieldName = 'createdby';
-          queryStr += fieldName + '.Name, ';
-        }
-        if (fieldName == 'lastmodifiedbyid') {
-          queryStr += fieldName + ', ';
-          fieldName = 'lastmodifiedby';
-          queryStr += fieldName + '.Name, ';
-        }
-        if (fieldName == 'parentId') {
-          queryStr += fieldName + ', ';
-          fieldName = 'parent';
-          queryStr += fieldName + '.Name, ';
-        }
-      } else if (
-        fieldDescribe.getType() == Schema.DisplayType.REFERENCE &&
-        !fieldsIgnore.contains(fieldName)
-      ) {
+      //Check if field api name is on the list of names to ignore, continue if so
+      if(fieldNamesIgnore.contains(fieldName)) {
+        continue;
+      }
+      //add field api name of special fields that require a different name when querying
+      else if(fieldNamesReplaced.containsKey(fieldName)) {
+        queryStr += fieldName + ', ';
+        fieldName = fieldNamesReplaced.get(fieldName);
+      } 
+      //Add Name from referenced fields
+      else if ( fieldDescribe.getType() == Schema.DisplayType.REFERENCE && !fieldNamesIgnore.contains(fieldName)) {
         if (fieldName.endsWith('__c')) {
           queryStr += fieldName + ', ';
           fieldName = fieldName.replace('__c', '__r');
@@ -166,19 +166,19 @@ public class OpenAI {
           queryStr += fieldName + ', ' + fieldName + '.Name, ';
         }
       } else {
-        // Not a reference field, just add the field name
+        // if just a regular field, go ahead and add to query string
         queryStr += fieldName + ', ';
       }
-      system.debug(queryStr);
+    system.debug('queryStr: ' + queryStr);
     }
-
+    //create query string
     queryStr = queryStr.substring(0, queryStr.length() - 2);
     queryStr +=
       ', (SELECT Id, Subject, Status, ActivityDate, Owner.Name FROM Tasks ORDER BY ActivityDate DESC LIMIT 10) FROM ' +
       objectName +
       ' WHERE Id = :recordId';
-
-    String responseJSON;
+    system.debug('queryStr = ' + queryStr);
+   
     if (objectName == 'Account') {
       Account acc = new Account();
       acc = Database.query(queryStr);
@@ -186,6 +186,7 @@ public class OpenAI {
     } else {
       Contact c = new contact();
       c = Database.query(queryStr);
+      system.debug(c);
       responseJSON = JSON.serialize(c);
     }
     system.debug(responseJSON);

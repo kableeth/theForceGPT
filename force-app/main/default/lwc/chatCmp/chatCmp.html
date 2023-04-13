@@ -1,23 +1,100 @@
 <template>
-  <section role="log" class="slds-chat">
-    <ul class="slds-chat-list">
-      <li class="slds-chat-listitem slds-chat-listitem_inbound">
-        <div class="slds-chat-message">
-          <div class="slds-chat-message__body">
-            <div
-              class="slds-chat-message__text slds-chat-message__text_inbound"
-            >
-              <span>Hi, my CloudWidget only speaks French</span>
-            </div>
-            <div
-              class="slds-chat-message__meta"
-              aria-label="said Taylor Watson-Rice at 4:59 PM"
-            >
-              Taylor Watson-Rice • 4:59 PM
-            </div>
+<section role="log" class="slds-chat">
+  <div class="slds-box">
+  <ul class="slds-chat-list">
+    <li class="slds-chat-listitem slds-chat-listitem_bookend">
+      <div class="slds-chat-bookend">
+        <span class="slds-icon_container slds-icon-utility-chat slds-chat-icon">
+          <svg class="slds-icon slds-icon_x-small slds-icon-text-default" aria-hidden="true">
+            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#chat"></use>
+          </svg>
+        </span>
+        <p>Chat started by
+          <b>Bruce Wayne</b> • 4:58 PM
+        </p>
+      </div>
+    </li>
+    <li class="slds-chat-listitem slds-chat-listitem_inbound">
+      <div class="slds-chat-message">
+        <span aria-hidden="true" class="slds-avatar slds-avatar_circle slds-chat-avatar">
+          <abbr class="slds-avatar__initials slds-avatar__initials_inverse" title="Bruce Wayne">BW</abbr>
+        </span>
+        <div class="slds-chat-message__body">
+          <div class="slds-chat-message__text slds-chat-message__text_inbound">
+            <span>Hi, I need to message alfred to pick me up from the bar.</span>
+          </div>
+          <div class="slds-chat-message__meta" aria-label="said Bruce Wayne at 4:59 PM">Bruce Wayne • 4:59 PM</div>
+        </div>
+      </div>
+    </li>
+    <li class="slds-chat-listitem slds-chat-listitem_outbound">
+      <div class="slds-chat-message">
+        <div class="slds-chat-message__body">
+          <div class="slds-chat-message__text slds-chat-message__text_outbound-agent">
+            <span>Hi Bruce, no problem. Will you be driving the benz or the batmobile?</span>
           </div>
         </div>
-      </li>
-    </ul>
-  </section>
+      </div>
+    </li>
+    <li class="slds-chat-listitem slds-chat-listitem_outbound">
+      <div class="slds-chat-message">
+        <div class="slds-chat-message__body">
+          <div class="slds-chat-message__text slds-chat-message__text_outbound-agent">
+            <span>your secret identity has been given up.</span>
+          </div>
+          <div class="slds-chat-message__meta" aria-label="said Open AI Assistant at 5:02 PM">Open AI Assistant • 5:02 PM</div>
+        </div>
+      </div>
+    </li>
+    <li class="slds-chat-listitem slds-chat-listitem_inbound">
+      <div class="slds-chat-message">
+        <span aria-hidden="true" class="slds-avatar slds-avatar_circle slds-chat-avatar">
+          <abbr class="slds-avatar__initials slds-avatar__initials_inverse" title="Bruce Wayne">BW</abbr>
+        </span>
+        <div class="slds-chat-message__body">
+          <div class="slds-chat-message__text slds-chat-message__text_inbound">
+            <span>yes, of course</span>
+          </div>
+          <div class="slds-chat-message__meta" aria-label="said Bruce Wayne at 5:09 PM">Bruce Wayne • 5:09 PM</div>
+        </div>
+      </div>
+    </li>
+    <li class="slds-chat-listitem slds-chat-listitem_outbound">
+      <div class="slds-chat-message">
+        <div class="slds-chat-message__body">
+          <div class="slds-chat-message__text slds-chat-message__text_outbound-agent">
+            <span>Sorry to hear that. Let me transfer you to a more technical support member. Thank you for your
+              patience!</span>
+          </div>
+          <div class="slds-chat-message__meta" aria-label="said AI Assistant at 5:15 PM">AI Assistant • 5:15 PM</div>
+        </div>
+      </div>
+    </li>
+    
+    <li class="slds-chat-listitem slds-chat-listitem_bookend">
+      <div class="slds-chat-bookend slds-chat-bookend_stop">
+        <span class="slds-icon_container slds-icon-utility-end_chat slds-chat-icon">
+          <svg class="slds-icon slds-icon_x-small slds-icon-text-default" aria-hidden="true">
+            <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#end_chat"></use>
+          </svg>
+        </span>
+        <p>Chat ended by
+          <b> Bruce Wayne</b> • 5:30 PM
+        </p>
+      </div>
+    </li>
+  </ul>
+  <div class="slds-grid slds-gutters">
+    <div class="slds-col slds-size_2-of-3">
+      <div class="slds-var-p-around_medium lgc-bg">
+        <lightning-input type="text" label="Prompt"></lightning-input>
+      </div>
+    </div>
+    <div class="slds-col slds-size_1-of-3 slds-align_absolute-center">
+      <lightning-button variant="brand" label="Send" title="Send" icon-name="utility:send"
+        class="slds-var-m-left_x-small"></lightning-button>
+    </div>
+  </div>
+      </div>
+</section>
 </template>
