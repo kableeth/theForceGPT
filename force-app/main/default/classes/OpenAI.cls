@@ -1,9 +1,5 @@
 public with sharing class OpenAI {
-  public static String sendMessage(
-    String context,
-    String prompt,
-    String recordId
-  ) {
+  public static String sendMessage(String context, String prompt, String recordId) {
     // Define the OpenAI API endpoint URL and API key
     String endpointUrl = 'https://api.openai.com/v1/chat/completions';
 
@@ -17,10 +13,12 @@ public with sharing class OpenAI {
       // Get the value of the secret_key__c field
       apiKey = setting.secret_key__c;
     }
+    else {
+      throw new CalloutException('Error: Missing API Key');
+    }
     //get record info from the page that the user is viewing
     system.debug('Getting record info');
     String record = getRecordInfo(recordId);
-
 
     //set LLM system prompt message
     Map<String, Object> message1 = new Map<String, Object>();
@@ -28,7 +26,7 @@ public with sharing class OpenAI {
     message1.put('content', context);
     messages.add(message1);
 
-    //send user prompt as input
+    //set user prompt as input
     Map<String, Object> message2 = new Map<String, Object>();
     message2.put('role', 'user');
     message2.put('content', prompt + '' + record);
@@ -112,6 +110,25 @@ public with sharing class OpenAI {
   public static String getRecordInfo(Id recordId) {
     // Get the describe result for the object
     String responseJSON;
+    Schema.DescribeSObjectResult describeResult = recordId.getSObjectType().getDescribe();
+    String objectName = describeResult.getName();
+    String queryStr = createQueryStr(recordId);
+    
+    
+    if (objectName == 'Account') {
+      Account acc = new Account();
+      acc = Database.query(queryStr);
+      responseJSON = JSON.serialize(acc);
+    } else {
+      Contact c = new contact();
+      c = Database.query(queryStr);
+      system.debug(c);
+      responseJSON = JSON.serialize(c);
+    }
+    system.debug(responseJSON);
+    return responseJSON;
+  }
+  private static String createQueryStr(Id recordId) {
     String queryStr = 'SELECT ';
     //get object & field info
     Schema.DescribeSObjectResult describeResult = recordId.getSObjectType().getDescribe();
@@ -178,19 +195,8 @@ public with sharing class OpenAI {
       objectName +
       ' WHERE Id = :recordId';
     system.debug('queryStr = ' + queryStr);
-   
-    if (objectName == 'Account') {
-      Account acc = new Account();
-      acc = Database.query(queryStr);
-      responseJSON = JSON.serialize(acc);
-    } else {
-      Contact c = new contact();
-      c = Database.query(queryStr);
-      system.debug(c);
-      responseJSON = JSON.serialize(c);
-    }
-    system.debug(responseJSON);
-    return responseJSON;
+
+    return queryStr;
   }
 
   // Create a wrapper class for invocable variables
