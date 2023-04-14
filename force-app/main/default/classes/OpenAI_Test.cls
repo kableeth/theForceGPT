@@ -1,16 +1,17 @@
 @isTest
 public class OpenAI_Test {
-  @isTest(SeeAllData=true)
+  @isTest
   static void testSendMessage() {
     // Create test data
-    List<Account> accounts = TestDataFactory.createTestAccounts(1, 'Customer');
+    Account acct = new Account(Name='Test Customer');
+    insert acct;
 
     // Set up mock implementation
     Test.startTest();
     Test.setMock(HttpCalloutMock.class, new MyHttpCalloutMock());
 
     // Call the method being tested
-    String response = OpenAI.sendMessage('test', 'test', accounts[0].Id);
+    String response = OpenAI.sendMessage('test', 'test', acct.Id);
 
     // Check that the response is not null
     System.assertNotEquals(null, response);
@@ -19,14 +20,15 @@ public class OpenAI_Test {
 
   @isTest
   static void testDraftFollowUpEmail() {
-    List<Account> accounts = TestDataFactory.createTestAccounts(1, 'Customer');
+    Account acct = new Account(Name='Test Customer');
+    insert acct;
 
     Test.startTest();
     Test.setMock(HttpCalloutMock.class, new MyHttpCalloutMock());
     // Call the method under test
     List<OpenAIExtension.FlowInput> flowInputs = new List<OpenAIExtension.FlowInput>();
     OpenAIExtension.FlowInput flowInput = new OpenAIExtension.FlowInput();
-    flowInput.recordId = accounts[0].Id;
+    flowInput.recordId = acct.Id;
     flowInputs.add(flowInput);
     List<OpenAIExtension.FlowResponse> flowResponses = OpenAIExtension.draftFollowUpEmail(
       flowInputs

@@ -88,12 +88,19 @@ public with sharing class OpenAI {
   }
   //draft follow up email
   public static String draftFollowUpEmail(Id recordId) {
-    User user;
-    user = [SELECT Signature FROM User WHERE Signature != NULL];
-    String signature = user.Signature;
-    List<Sales_Email_Example__c> salesEmailExamples = new List<Sales_Email_Example__c>();
 
-    salesEmailExamples = [SELECT Body__c FROM Sales_Email_Example__c];
+    //get user signature
+    User user = new User();
+    Id userId = UserInfo.getUserId();
+    String signature = '';
+    User = [SELECT Signature FROM User WHERE Id = :userId LIMIT 1];
+    if(user.signature != null) {
+       signature = user.Signature;
+    }
+
+    //get sample email style
+    List<Sales_Email_Example__c> salesEmailExamples = new List<Sales_Email_Example__c>();
+    salesEmailExamples = [SELECT Body__c FROM Sales_Email_Example__c LIMIT 10];
 
     String emailExamples = JSON.serialize(salesEmailExamples);
 
@@ -168,21 +175,19 @@ public with sharing class OpenAI {
       if(fieldNamesIgnore.contains(fieldName)) {
         continue;
       }
-      //add field api name of special fields that require a different name when querying
-      else if(fieldNamesReplaced.containsKey(fieldName)) {
+      //if field is lookup and a standard field
+      else if(fieldDescribe.getType() == Schema.DisplayType.REFERENCE && fieldDescribe.isCustom() == false) {
         queryStr += fieldName + ', ';
-        fieldName = fieldNamesReplaced.get(fieldName);
+        fieldName = fieldName.substring(0, fieldName.length() - 2);
+        queryStr += fieldName + '.Name, ';
+      }
+      // if field is lookup and custom
+      else if (fieldDescribe.getType() == Schema.DisplayType.REFERENCE && fieldDescribe.isCustom() == false) {
+        queryStr += fieldName + ', ';
+        fieldName = fieldName.replace('__c', '__r');
+        queryStr += fieldName + '.Name, ';
       } 
-      //Add Name from referenced fields
-      else if ( fieldDescribe.getType() == Schema.DisplayType.REFERENCE && !fieldNamesIgnore.contains(fieldName)) {
-        if (fieldName.endsWith('__c')) {
-          queryStr += fieldName + ', ';
-          fieldName = fieldName.replace('__c', '__r');
-          queryStr += fieldName + '.Name, ';
-        } else {
-          queryStr += fieldName + ', ' + fieldName + '.Name, ';
-        }
-      } else {
+      else {
         // if just a regular field, go ahead and add to query string
         queryStr += fieldName + ', ';
       }
