@@ -18,7 +18,7 @@ To use this integration, you will need:
 
 ## Installation
 
-1. Install the package to your org. <a href="https://login.salesforce.com/packaging/installPackage.apexp?p0=04tEm0000001y6z">(Production Install Link | </a> <a href="https://test.salesforce.com/packaging/installPackage.apexp?p0=04tEm0000001y6z">(Sandbox Install Link)</a> 
+1. Install the package to your org. <a href="https://login.salesforce.com/packaging/installPackage.apexp?p0=04tEm0000001y6z">(Production Install Link | </a> <a href="https://test.salesforce.com/packaging/installPackage.apexp?p0=04tEm0000001y6z">Sandbox Install Link)</a> 
 2. Enter OpenAI API key into custom settings named "OpenAI Secret Key"
 4. Configure any special fields settings in the custom metadata type labled "OpenAI Chat Settings Special Field". Add any fields to ignore using the field api name and "Ignore" action
 5. Activate & drop the "Open AI Send Message" Screen flow on the contact or record you'd like to use the component form.
