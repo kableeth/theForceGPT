@@ -20,19 +20,11 @@ To use this integration, you will need:
 
 1. Install the package to your org. <a href="https://login.salesforce.com/packaging/installPackage.apexp?p0=04tEm0000001y6z">(Production Install Link | </a> <a href="https://test.salesforce.com/packaging/installPackage.apexp?p0=04tEm0000001y6z">Sandbox Install Link)</a> 
 2. Enter OpenAI API key into custom settings named "OpenAI Secret Key"
-4. Configure any special fields settings in the custom metadata type labled "OpenAI Chat Settings Special Field". Add any fields to ignore using the field api name and "Ignore" action
+4. Configure any special fields settings in the custom metadata type labeled "OpenAI Chat Settings Special Field". Add any fields to ignore using the field api name and "Ignore" action
 5. Activate & drop the "Open AI Send Message" Screen flow on the contact or record you'd like to use the component form.
 6. Check "Pass record Id into this variable" on the Flow properties of the Lightning App Builder
 7. Create a Sample Sales Email record with an example email that you would like the "Draft F/U Sales Email" to use as inspiration.
 
 ## Usage
 
-```java
-// Draft a follow-up email
-String generatedEmail = OpenAI.draftFollowUpEmail(recordId);
-
-// Send a message to OpenAI API
-String response = OpenAI.sendMessage(context, prompt, recordId);
-
-// For use in a flow
-List<OpenAI.FlowResponse> flowResponses = OpenAI.sendOpenAIRequest(flowInputs);
+<a href="https://www.loom.com/share/f6b40ecf1b42415595f9ab3ab00faacd"> Loom video on usages</a>
