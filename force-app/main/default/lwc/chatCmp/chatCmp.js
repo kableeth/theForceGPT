@@ -1,8 +1,11 @@
-import { LightningElement, wire, track } from 'lwc';
+import { LightningElement, wire, track, api } from 'lwc';
 import getMessages from '@salesforce/apex/ChatMessageController.getMessages';
+import sendPrompt from '@salesforce/apex/ChatMessageController.sendPrompt';
 
 export default class ChatComponent extends LightningElement {
+    @api recordId;
     @track messages = [];
+    searchKey = '';
 
     @wire(getMessages)
     loadMessages({ error, data }) {
@@ -30,5 +33,20 @@ export default class ChatComponent extends LightningElement {
         } else if (error) {
             console.error
         }
+    }
+
+    handleKeyChange(event) {
+        this.searchKey = event.target.value;
+    }
+
+    handleSend() {
+        sendPrompt({ prompt: this.searchKey, recordId: this.recordId })
+            .then(() => {
+                this.searchKey = '';
+                return refreshApex(this.messages);
+            })
+            .catch((error) => {
+                console.error('Error sending prompt:', error);
+            });
     }
 }
