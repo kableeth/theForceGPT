@@ -4,21 +4,18 @@ public with sharing class ChatMessageController {
         return [SELECT Id, OwnerId, Owner.Name, Message__c, Sender_Type__c, CreatedDate FROM Open_AI_Message__c ORDER BY CreatedDate DESC LIMIT 10];
     }
 
-    @AuraEnabled
+    @AuraEnabled(cacheable=true)
     public static void sendPrompt(String prompt, String recordId) {
         // Create a new Open_AI_Message__c record for the prompt
         Open_AI_Message__c newMessage = new Open_AI_Message__c();
         newMessage.Message__c = prompt;
         newMessage.Sender_Type__c = 'Outbound'; // Change this to 'Inbound' if the user is sending the prompt
-        
-        // Insert the new message into the database
-        insert newMessage;
 
         // Call the OpenAI Apex class with the prompt
-        String context = 'your-context-here'; // Set the context for the conversation
-        String response = OpenAI.sendMessage(context, prompt, recordId);
+        String context = 'you are a helpful assistant'; // Set the context for the conversation
 
-        // Process the response and save it as needed
-        // ...
+        // Enqueue the callout
+        OpenAIQueueableCallout callout = new OpenAIQueueableCallout(context, prompt, recordId);
+        System.enqueueJob(callout);
     }
 }

@@ -1,14 +1,21 @@
 import { LightningElement, wire, track, api } from 'lwc';
+import { refreshApex } from '@salesforce/apex';
 import getMessages from '@salesforce/apex/ChatMessageController.getMessages';
 import sendPrompt from '@salesforce/apex/ChatMessageController.sendPrompt';
+import { createRecord } from 'lightning/uiRecordApi'; // Import createRecord
+import OPEN_AI_MESSAGE_OBJECT from '@salesforce/schema/Open_AI_Message__c';
 
 export default class ChatComponent extends LightningElement {
     @api recordId;
     @track messages = [];
     searchKey = '';
 
+    wiredMessages;
+
     @wire(getMessages)
-    loadMessages({ error, data }) {
+    async loadMessages(result) {
+        this.wiredMessagesResult = result;
+        const { data, error } = result;
         if (data) {
             this.messages = data.map(message => {
                 const isInbound = message.Sender_Type__c === 'Inbound';
@@ -30,6 +37,7 @@ export default class ChatComponent extends LightningElement {
                     ariaLabel: `said ${message.Owner.Name} at ${timestamp}`
                 };
             });
+            this.messages = this.messages.reverse();    
         } else if (error) {
             console.error
         }
@@ -39,14 +47,27 @@ export default class ChatComponent extends LightningElement {
         this.searchKey = event.target.value;
     }
 
-    handleSend() {
-        sendPrompt({ prompt: this.searchKey, recordId: this.recordId })
-            .then(() => {
-                this.searchKey = '';
-                return refreshApex(this.messages);
-            })
-            .catch((error) => {
-                console.error('Error sending prompt:', error);
-            });
+    handleSend() { // Make the method async
+        // Create an OpenAI_Message__c record
+        const openaiMessageFields = {
+            Message__c: this.searchKey,
+            Sender_Type__c: 'outbound'
+        };
+        const recordInput = {
+            apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
+            fields: openaiMessageFields
+        };
+
+        try {
+            console.log('before send prmpt.')   
+            createRecord(recordInput); // Create the OpenAI_Message__c record
+            console.log('before send prmpt.')
+            sendPrompt({ prompt: this.searchKey, recordId: this.recordId });
+            console.log('after send prmpt.'); // Send the prompt
+            this.searchKey = '';
+            this.loadMessages();
+        } catch (error) {
+            console.error('Error sending prompt:', error);
+        }
     }
 }
