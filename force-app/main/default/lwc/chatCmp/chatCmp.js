@@ -2,7 +2,7 @@ import { LightningElement, wire, track, api } from 'lwc';
 import { refreshApex } from '@salesforce/apex';
 import getMessages from '@salesforce/apex/ChatMessageController.getMessages';
 import sendPrompt from '@salesforce/apex/ChatMessageController.sendPrompt';
-import { createRecord } from 'lightning/uiRecordApi'; // Import createRecord
+import { createRecord } from 'lightning/uiRecordApi';
 import OPEN_AI_MESSAGE_OBJECT from '@salesforce/schema/Open_AI_Message__c';
 
 export default class ChatComponent extends LightningElement {
@@ -13,9 +13,9 @@ export default class ChatComponent extends LightningElement {
     wiredMessages;
 
     @wire(getMessages)
-    async loadMessages(result) {
+    loadMessages(result) {
         this.wiredMessagesResult = result;
-        const { data, error } = result;
+        const { error, data } = result;
         if (data) {
             this.messages = data.map(message => {
                 const isInbound = message.Sender_Type__c === 'Inbound';
@@ -39,7 +39,7 @@ export default class ChatComponent extends LightningElement {
             });
             this.messages = this.messages.reverse();    
         } else if (error) {
-            console.error
+            console.error('error loading message:', error)
         }
     }
 
@@ -47,27 +47,51 @@ export default class ChatComponent extends LightningElement {
         this.searchKey = event.target.value;
     }
 
-    handleSend() { // Make the method async
-        // Create an OpenAI_Message__c record
-        const openaiMessageFields = {
-            Message__c: this.searchKey,
-            Sender_Type__c: 'outbound'
-        };
-        const recordInput = {
-            apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
-            fields: openaiMessageFields
-        };
-
+    async handleSend() {
         try {
-            console.log('before send prmpt.')   
-            createRecord(recordInput); // Create the OpenAI_Message__c record
-            console.log('before send prmpt.')
-            sendPrompt({ prompt: this.searchKey, recordId: this.recordId });
-            console.log('after send prmpt.'); // Send the prompt
+            console.log('before send prmpt.');
+
+            // Create outbound message record
+            const outboundMessage = {
+                apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
+                fields: {
+                    Message__c: this.searchKey,
+                    Sender_Type__c: 'Outbound',
+                    recordid__c: this.recordId,
+                }
+            };
+
+            await createRecord(outboundMessage);
+
+            // Send the prompt and retrieve the response
+            const response = await sendPrompt({ prompt: this.searchKey, recordId: this.recordId });
+            console.log(response);
+
+            // Create inbound message record
+            const inboundMessage = {
+                apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
+                fields: {
+                    Message__c: response,
+                    Sender_Type__c: 'Inbound',
+                    recordid__c: this.recordId,
+                }
+            };
+
+            await createRecord(inboundMessage);
+
             this.searchKey = '';
-            this.loadMessages();
+
+            // Refresh messages
+            await refreshApex(this.wiredMessagesResult);
+            console.log('message logged');
+
         } catch (error) {
             console.error('Error sending prompt:', error);
+        }
+    }
+    handleKeyUp(event) {
+        if (event.keyCode === 13) { // Check if the Enter key was pressed
+            this.handleSend(); // Call your desired method
         }
     }
 }

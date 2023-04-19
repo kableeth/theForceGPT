@@ -25,7 +25,7 @@
     <div class="slds-var-m-around_medium">
       <lightning-layout vertical-align="end" class="slds-var-m-bottom_small">
         <lightning-layout-item flexibility="grow">
-          <lightning-input type="search" onchange={handleKeyChange} label="Enter Prompt" value={searchKey}>
+          <lightning-input type="text" onchange={handleKeyChange} label="Enter It!" value={searchKey} onkeyup={handleKeyUp}>
           </lightning-input>
         </lightning-layout-item>
         <lightning-layout-item class="slds-var-p-left_xx-small">
