@@ -13,22 +13,7 @@ public with sharing class ChatMessageController {
 
         // Call the OpenAI Apex class with the prompt
         String context = 'you are a helpful assistant'; // Set the context for the conversation
-
-        /* // Enqueue the callout
-        OpenAIQueueableCallout callout = new OpenAIQueueableCallout(context, prompt, recordId);
-        System.enqueueJob(callout); */
         String response = OpenAI.sendMessage(context, prompt, recordId);
-        
-        /* Open_AI_Message__c responseMessage = new Open_AI_Message__c();
-        responseMessage.Message__c = response;
-        responseMessage.Sender_Type__c = 'Inbound';
-
-        // Insert the response message into the database
-        insert responseMessage; */
-
-       /*  Continuation cont = new Continuation(60);
-        cont.state = new Map<String, Object>{ 'recordId' => recordId };
-        cont = OpenAI.sendMessage(cont, context, prompt, recordId); */
         return response;
     }
     @AuraEnabled
