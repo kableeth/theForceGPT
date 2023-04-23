@@ -1,27 +1,29 @@
 <template>
   <lightning-card title="Chat Component" icon-name="standard:chat">
-    <section role="log" class="slds-chat">
-      <ul class="slds-chat-list">
-        <template for:each={messages} for:item="message">
-          <li key={message.Id} class={message.containerClass}>
-            <div class="slds-chat-message">
-              <span if:true={message.showAvatar} aria-hidden="true"
-                class="slds-avatar slds-avatar_circle slds-chat-avatar">
-                <abbr class="slds-avatar__initials slds-avatar__initials_inverse"
-                  title={message.senderName}>{message.senderInitials}</abbr>
-              </span>
-              <div class="slds-chat-message__body">
-                <div class={message.messageClass}>
-                  <span>{message.messageText}</span>
+    <div class="chat-container">
+      <section role="log" class="slds-chat">
+        <ul class="slds-chat-list">
+          <template for:each={messages} for:item="message">
+            <li key={message.Id} class={message.containerClass}>
+              <div class="slds-chat-message">
+                <span if:true={message.showAvatar} aria-hidden="true"
+                  class="slds-avatar slds-avatar_circle slds-chat-avatar">
+                  <abbr class="slds-avatar__initials slds-avatar__initials_inverse"
+                    title={message.senderName}>{message.senderInitials}</abbr>
+                </span>
+                <div class="slds-chat-message__body">
+                  <div class={message.messageClass}>
+                    <span>{message.messageText}</span>
+                  </div>
+                  <div class="slds-chat-message__meta" aria-label={message.ariaLabel}>{message.senderName} •
+                    {message.timestamp}</div>
                 </div>
-                <div class="slds-chat-message__meta" aria-label={message.ariaLabel}>{message.senderName} •
-                  {message.timestamp}</div>
               </div>
-            </div>
-          </li>
-        </template>
-      </ul>
-    </section>
+            </li>
+          </template>
+        </ul>
+      </section>
+    
     <div class="slds-var-m-around_medium">
       <lightning-layout vertical-align="end" class="slds-var-m-bottom_small">
         <lightning-layout-item flexibility="grow">
@@ -32,6 +34,7 @@
           <lightning-button label="Send" onclick={handleSend}></lightning-button>
         </lightning-layout-item>
       </lightning-layout>
+    </div>
     </div>
   </lightning-card>
 </template>
