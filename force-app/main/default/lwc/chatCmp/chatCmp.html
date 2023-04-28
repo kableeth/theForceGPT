@@ -1,40 +1,63 @@
 <template>
   <lightning-card title="Chat Component" icon-name="standard:chat">
     <div class="chat-container">
-      <section role="log" class="slds-chat">
-        <ul class="slds-chat-list">
-          <template for:each={messages} for:item="message">
-            <li key={message.Id} class={message.containerClass}>
-              <div class="slds-chat-message">
-                <span if:true={message.showAvatar} aria-hidden="true"
-                  class="slds-avatar slds-avatar_circle slds-chat-avatar">
-                  <abbr class="slds-avatar__initials slds-avatar__initials_inverse"
-                    title={message.senderName}>{message.senderInitials}</abbr>
-                </span>
-                <div class="slds-chat-message__body">
-                  <div class={message.messageClass}>
-                    <span>{message.messageText}</span>
+      <div class="messages-container">
+        <section role="log" class="slds-chat">
+          <ul class="slds-chat-list">
+            <template for:each={messages} for:item="message">
+              <li key={message.Id} class={message.containerClass}>
+                <div class="slds-chat-message">
+                  <span if:true={message.showAvatar} aria-hidden="true"
+                    class="slds-avatar slds-avatar_circle slds-chat-avatar">
+                    <abbr class="slds-avatar__initials slds-avatar__initials_inverse"
+                      title={message.senderName}>{message.senderInitials}</abbr>
+                  </span>
+                  <div class="slds-chat-message__body">
+                    <div class={message.messageClass}>
+                      <span>{message.messageText}</span>
+                    </div>
+                    <div class="slds-chat-message__meta" aria-label={message.ariaLabel}>{message.senderName} •
+                      {message.timestamp}</div>
                   </div>
-                  <div class="slds-chat-message__meta" aria-label={message.ariaLabel}>{message.senderName} •
-                    {message.timestamp}</div>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </section>
+        <template if:true={isTyping}>
+          <li class="slds-chat-listitem slds-chat-listitem_inbound">
+            <div class="slds-chat-message">
+              <span aria-hidden="true" class="slds-avatar slds-avatar_circle slds-chat-avatar">
+                <abbr class="slds-avatar__initials slds-avatar__initials_inverse" title="Bot">AI</abbr>
+              </span>
+              <div class="slds-chat-message__body">
+                <div class="slds-chat-message__text slds-chat-message__text_inbound">
+                  <span class="slds-icon-typing slds-is-animated" title="Customer is typing">
+                    <span class="slds-icon-typing__dot"></span>
+                    <span class="slds-icon-typing__dot"></span>
+                    <span class="slds-icon-typing__dot"></span>
+                    <span class="slds-assistive-text">Customer is typing</span>
+                  </span>
                 </div>
               </div>
-            </li>
-          </template>
-        </ul>
-      </section>
-    
-    <div class="slds-var-m-around_medium">
-      <lightning-layout vertical-align="end" class="slds-var-m-bottom_small">
-        <lightning-layout-item flexibility="grow">
-          <lightning-input type="text" onchange={handleKeyChange} label="Enter It!" value={searchKey} onkeyup={handleKeyUp}>
-          </lightning-input>
-        </lightning-layout-item>
-        <lightning-layout-item class="slds-var-p-left_xx-small">
-          <lightning-button label="Send" onclick={handleSend}></lightning-button>
-        </lightning-layout-item>
-      </lightning-layout>
-    </div>
+            </div>
+          </li>
+        </template>
+      </div>
+      <div class="input-container">
+        <div class="slds-var-m-around_medium">
+          <lightning-layout vertical-align="end" class="slds-var-m-bottom_small">
+            <lightning-layout-item flexibility="grow">
+              <lightning-input type="text" onchange={handleKeyChange} label="Enter It!" value={searchKey}
+                onkeyup={handleKeyUp}>
+              </lightning-input>
+            </lightning-layout-item>
+            <lightning-layout-item class="slds-var-p-left_xx-small">
+              <lightning-button label="Send" onclick={handleSend}></lightning-button>
+            </lightning-layout-item>
+          </lightning-layout>
+        </div>
+      </div>
     </div>
   </lightning-card>
 </template>

@@ -4,37 +4,12 @@ import getMessages from '@salesforce/apex/ChatMessageController.getMessages';
 import sendPrompt from '@salesforce/apex/ChatMessageController.sendPrompt';
 import { createRecord } from 'lightning/uiRecordApi';
 import OPEN_AI_MESSAGE_OBJECT from '@salesforce/schema/Open_AI_Message__c';
-import { CurrentPageReference } from 'lightning/navigation';
-import { registerListener, unregisterAllListeners } from 'c/pubsub';
 
 export default class ChatComponent extends LightningElement {
     @api recordId;
-    @wire(CurrentPageReference) 
-    pageRef;
     @track messages = [];
     searchKey = '';
-
-    connectedCallback() {
-        registerListener('urlChange', this.handleUrlChange, this);
-    }
-
-    disconnectedCallback() {
-        unregisterAllListeners(this);
-    }
-
-    handleUrlChange(url) {
-        console.log('handleUrlChange');
-        const recordIdRegex = /\/lightning\/r\/([^/]+)\/([^/]+)\/view/;
-        const match = url.match(recordIdRegex);
-
-        if (match && match.length === 3) {
-            this.recordId = match[2];
-            this.error = null;
-        } else {
-            this.recordId = null;
-            this.error = 'Not on a record page';
-        }
-    }
+    isTyping = false;
 
     wiredMessages;
 
@@ -77,6 +52,7 @@ export default class ChatComponent extends LightningElement {
         try {
             console.log('before send prmpt.');
             console.log('recordId: ' + this.recordId);
+            this.isTyping = true;
 
             // Create outbound message record
             const outboundMessage = {
@@ -110,6 +86,7 @@ export default class ChatComponent extends LightningElement {
 
             // Refresh messages
             await refreshApex(this.wiredMessagesResult);
+            this.isTyping = false;
             console.log('message logged');
 
         } catch (error) {

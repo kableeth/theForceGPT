@@ -1,11 +1,12 @@
 <!-- displayRecordId.cmp -->
 <aura:component implements="force:lightningQuickAction, force:hasRecordId, flexipage:availableForAllPageTypes">
     <aura:attribute name="recordId" type="String" />
-
+<div class="chat-container">
     <lightning:card title="Record ID">
         <p class="slds-var-p-horizontal_small">
             {!v.recordId}
         </p>
     </lightning:card>
-    <c:chatCmp recordId="{!v.recordId}"></c:chatCmp>
+    <c:chatCmp  recordId="{!v.recordId}"></c:chatCmp>
+    </div>
 </aura:component>
