@@ -9,6 +9,7 @@ export default class ChatComponent extends LightningElement {
     @api recordId;
     @track messages = [];
     searchKey = '';
+    prompt = '';
     isTyping = false;
 
     wiredMessages;
@@ -49,53 +50,70 @@ export default class ChatComponent extends LightningElement {
     }
 
     async handleSend() {
-        try {
-            console.log('before send prmpt.');
-            console.log('recordId: ' + this.recordId);
-            this.isTyping = true;
+    try {
+        console.log('before send prompt.');
+        console.log('recordId: ' + this.recordId);
+        this.prompt = this.searchKey;
+        this.searchKey = '';
+        this.isTyping = true;
 
-            // Create outbound message record
-            const outboundMessage = {
-                apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
-                fields: {
-                    Message__c: this.searchKey,
-                    Sender_Type__c: 'Outbound',
-                    recordid__c: this.recordId,
-                }
-            };
+        // Create outbound message record
+        const outboundMessage = {
+            apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
+            fields: {
+                Message__c: this.prompt,
+                Sender_Type__c: 'Outbound',
+                recordid__c: this.recordId,
+            }
+        };
 
-            await createRecord(outboundMessage);
+        await createRecord(outboundMessage);
 
-            // Send the prompt and retrieve the response
-            const response = await sendPrompt({ prompt: this.searchKey, recordId: this.recordId });
-            console.log(response);
+        // Scroll to the bottom of the messages container again
+        this.scrollToBottom();
 
-            // Create inbound message record
-            const inboundMessage = {
-                apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
-                fields: {
-                    Message__c: response,
-                    Sender_Type__c: 'Inbound',
-                    recordid__c: this.recordId,
-                }
-            };
+        // Refresh messages after creating the outbound message
+        await refreshApex(this.wiredMessagesResult);
 
-            await createRecord(inboundMessage);
+        // Send the prompt and retrieve the response
+        const response = await sendPrompt({ prompt: this.prompt, recordId: this.recordId });
+        console.log(response);
 
-            this.searchKey = '';
+        // Create inbound message record
+        const inboundMessage = {
+            apiName: OPEN_AI_MESSAGE_OBJECT.objectApiName,
+            fields: {
+                Message__c: response,
+                Sender_Type__c: 'Inbound',
+                recordid__c: this.recordId,
+            }
+        };
+        this.scrollToBottom();
+        
+        await createRecord(inboundMessage);
 
-            // Refresh messages
-            await refreshApex(this.wiredMessagesResult);
-            this.isTyping = false;
-            console.log('message logged');
+        // Refresh messages again after creating the inbound message
+        await refreshApex(this.wiredMessagesResult);
 
-        } catch (error) {
-            console.error('Error sending prompt:', error);
-        }
+        // Scroll to the bottom of the messages container again
+        this.scrollToBottom();
+
+        this.isTyping = false;
+        console.log('message logged');
+
+    } catch (error) {
+        console.error('Error sending prompt:', error);
     }
+}
     handleKeyUp(event) {
         if (event.keyCode === 13) { // Check if the Enter key was pressed
             this.handleSend(); // Call your desired method
         }
     }
+    scrollToBottom() {
+    const container = this.template.querySelector('[data-id="messages-container"]');
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
 }

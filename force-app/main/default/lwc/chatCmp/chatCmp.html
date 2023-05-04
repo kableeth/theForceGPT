@@ -1,7 +1,26 @@
 <template>
   <lightning-card title="Chat Component" icon-name="standard:chat">
     <div class="chat-container">
-      <div class="messages-container">
+      <div class="messages-container" data-id="messages-container">
+        <template if:true={isTyping}>
+          <li class="slds-chat-listitem slds-chat-listitem_inbound">
+            <div class="slds-chat-message">
+              <span aria-hidden="true" class="slds-avatar slds-avatar_circle slds-chat-avatar">
+                <abbr class="slds-avatar__initials slds-avatar__initials_inverse" title="Bot">AI</abbr>
+              </span>
+              <div class="slds-chat-message__body">
+                <div class="slds-chat-message__text slds-chat-message__text_inbound">
+                  <span class="slds-icon-typing slds-is-animated" title="Customer is typing">
+                    <span class="slds-icon-typing__dot"></span>
+                    <span class="slds-icon-typing__dot"></span>
+                    <span class="slds-icon-typing__dot"></span>
+                    <span class="slds-assistive-text">Customer is typing</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </li>
+        </template>
         <section role="log" class="slds-chat">
           <ul class="slds-chat-list">
             <template for:each={messages} for:item="message">
@@ -24,31 +43,12 @@
             </template>
           </ul>
         </section>
-        <template if:true={isTyping}>
-          <li class="slds-chat-listitem slds-chat-listitem_inbound">
-            <div class="slds-chat-message">
-              <span aria-hidden="true" class="slds-avatar slds-avatar_circle slds-chat-avatar">
-                <abbr class="slds-avatar__initials slds-avatar__initials_inverse" title="Bot">AI</abbr>
-              </span>
-              <div class="slds-chat-message__body">
-                <div class="slds-chat-message__text slds-chat-message__text_inbound">
-                  <span class="slds-icon-typing slds-is-animated" title="Customer is typing">
-                    <span class="slds-icon-typing__dot"></span>
-                    <span class="slds-icon-typing__dot"></span>
-                    <span class="slds-icon-typing__dot"></span>
-                    <span class="slds-assistive-text">Customer is typing</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </li>
-        </template>
       </div>
       <div class="input-container">
         <div class="slds-var-m-around_medium">
           <lightning-layout vertical-align="end" class="slds-var-m-bottom_small">
             <lightning-layout-item flexibility="grow">
-              <lightning-input type="text" onchange={handleKeyChange} label="Enter It!" value={searchKey}
+              <lightning-input type="text" onchange={handleKeyChange} value={searchKey}
                 onkeyup={handleKeyUp}>
               </lightning-input>
             </lightning-layout-item>
