@@ -16,39 +16,4 @@ public with sharing class ChatMessageController {
         String response = OpenAI.sendMessage(context, prompt, recordId);
         return response;
     }
-    @AuraEnabled
-    public static void logMessages(String prompt, String botResponse, String recordId) {
-        system.debug('Logging Message');
-   
-    List<Open_AI_Message__c> messages = new List<Open_AI_Message__c>();
-    Open_AI_Message__c inboundMessage = new Open_AI_Message__c();
-
-    inboundMessage.Message__c = botResponse;
-    inboundMessage.Sender_Type__c = 'Inbound';
-    inboundMessage.RecordId__c = recordId;
-    messages.add(inboundMessage);
-
-     Open_AI_Message__c outboundMessage = new Open_AI_Message__c();
-    outboundMessage.Message__c = prompt;
-    outboundMessage.Sender_Type__c = 'Outbound';
-    outboundMessage.RecordId__c = recordId;
-    messages.add(outboundMessage);
-
-        try {
-            insert messages;
-        }
-        catch (DmlException e) {
-            system.debug('DmlException: ' + e.getMessage());
-        }
-
-  }
-     /* // Continuation callback method
-    @AuraEnabled
-    public static void handleResponse(Object state, HttpResponse response) {
-        String recordId = (String) ((Map<String, Object>) state).get('recordId');
-        String responseBody = response.getBody();
-
-        // Process the response and save it to the database
-        // ... your code here ...
-    } */
 }
