@@ -6,11 +6,21 @@ import { createRecord } from 'lightning/uiRecordApi';
 import OPEN_AI_MESSAGE_OBJECT from '@salesforce/schema/Open_AI_Message__c';
 
 export default class ChatComponent extends LightningElement {
-    @api recordId;
+    _recordId;
+    
     @track messages = [];
     searchKey = '';
     prompt = '';
     isTyping = false;
+
+    @api recordId;
+    get recordId() {
+        return this._recordId;
+    }
+    set recordId(value) {
+        this._recordId = value;
+        console.log('recordId changed:', this._recordId);
+    }
 
     wiredMessages;
 
